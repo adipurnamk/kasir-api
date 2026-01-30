@@ -1,2 +1,2 @@
-# kasir-api
-kasih API golang
+# cashier-api
+cashier-api golang
