@@ -3,6 +3,7 @@ module kasir-api
 go 1.25.4
 
 require (
+	github.com/go-chi/chi/v5 v5.0.8
 	github.com/jackc/pgx/v5 v5.8.0
 	github.com/spf13/viper v1.21.0
 )
