@@ -1,15 +1,16 @@
 package main
 
 import (
-	"net/http"
-	"os"
-	"strings"
-	"github.com/spf13/viper"
 	"kasir-api/databases"
 	"kasir-api/handlers"
 	"kasir-api/repositories"
 	"kasir-api/services"
 	"log"
+	"net/http"
+	"os"
+	"strings"
+
+	"github.com/spf13/viper"
 )
 
 // ubah Config
@@ -17,8 +18,6 @@ type Config struct {
 	Port   string `mapstructure:"PORT"`
 	DBConn string `mapstructure:"DB_CONN"`
 }
-
-
 
 func main() {
 	viper.AutomaticEnv()
@@ -29,12 +28,10 @@ func main() {
 		_ = viper.ReadInConfig()
 	}
 
-
 	config := Config{
-			Port:   viper.GetString("PORT"),
-			DBConn: viper.GetString("DB_CONN"),
+		Port:   viper.GetString("PORT"),
+		DBConn: viper.GetString("DB_CONN"),
 	}
-
 
 	// Setup database
 	db, err := databases.InitDB(config.DBConn)
@@ -48,6 +45,7 @@ func main() {
 	productHandler := handlers.NewProductHandler(productService)
 
 	// Setup routes
+	http.HandleFunc("/healthz", handlers.HealthzHandler)
 	http.HandleFunc("/api/produk", productHandler.HandleProducts)
 	http.HandleFunc("/api/produk/", productHandler.HandleProductByID)
 

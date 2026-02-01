@@ -1,29 +1,41 @@
 package databases
 
 import (
-	"database/sql"
-	"log"
+    "context"
+    "database/sql"
+    "log"
+    "strings"
+    "time"
 
-	_ "github.com/lib/pq"
+    // use pgx stdlib driver
+    _ "github.com/jackc/pgx/v5/stdlib"
 )
 
 func InitDB(connectionString string) (*sql.DB, error) {
-	// Open database
-	db, err := sql.Open("postgres", connectionString)
-	if err != nil {
-		return nil, err
-	}
+    // Mask password for logs
+    masked := connectionString
+    if at := strings.Index(masked, "@"); at != -1 {
+        if proto := strings.Index(masked, "://"); proto != -1 {
+            masked = masked[:proto+3] + "*****" + masked[at:]
+        }
+    }
+    log.Println("Connecting to DB:", masked)
 
-	// Test connection
-	err = db.Ping()
-	if err != nil {
-		return nil, err
-	}
+    // open with pgx driver
+    db, err := sql.Open("pgx", connectionString)
+    if err != nil {
+        return nil, err
+    }
 
-	// Set connection pool settings (optional tapi recommended)
-	db.SetMaxOpenConns(25)
-	db.SetMaxIdleConns(5)
+    ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+    defer cancel()
+    if err := db.PingContext(ctx); err != nil {
+        return nil, err
+    }
 
-	log.Println("Database connected successfully")
-	return db, nil
+    db.SetMaxOpenConns(25)
+    db.SetMaxIdleConns(5)
+
+    log.Println("Database connected successfully")
+    return db, nil
 }
