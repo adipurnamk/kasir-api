@@ -46,8 +46,8 @@ func main() {
 
 	// Setup routes
 	http.HandleFunc("/healthz", handlers.HealthzHandler)
-	http.HandleFunc("/api/produk", productHandler.HandleProducts)
-	http.HandleFunc("/api/produk/", productHandler.HandleProductByID)
+	http.HandleFunc("/api/products", productHandler.HandleProducts)
+	http.HandleFunc("/api/products/", productHandler.HandleProductByID)
 
 	log.Printf("Server running on port %s\n", config.Port)
 	log.Fatal(http.ListenAndServe(":"+config.Port, nil))
