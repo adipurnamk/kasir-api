@@ -62,6 +62,11 @@ func main() {
 
 	http.HandleFunc("/api/checkout", transactionHandler.HandleCheckout) // POST
 
+	// Report
+	reportRepo := repositories.NewReportRepository(db)
+	reportService := services.NewReportService(reportRepo)
+	reportHandler := handlers.NewReportHandler(reportService)
+
 	// Create Chi router for categories and mount the default mux so product routes keep working
 	r := chi.NewRouter()
 	r.Use(middleware.Logger, middleware.Recoverer)
@@ -71,6 +76,10 @@ func main() {
 	r.Get("/api/categories/{id}", categoryHandler.GetByID)
 	r.Put("/api/categories/{id}", categoryHandler.Update)
 	r.Delete("/api/categories/{id}", categoryHandler.Delete)
+
+	// Report routes
+	r.Get("/api/report/hari-ini", reportHandler.GetDailySalesReport)
+	r.Get("/api/report", reportHandler.GetSalesReportByRange)
 
 	// Mount existing DefaultServeMux so old handlers continue to work
 	r.Mount("/", http.DefaultServeMux)
