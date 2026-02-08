@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"kasir-api/models"
+	"strings"
 )
 
 // TransactionRepository handles transaction-related database operations.
@@ -60,10 +61,21 @@ func (repo *TransactionRepository) CreateTransaction(items []models.CheckoutItem
 		return nil, err
 	}
 
-	for i := range details {
-		details[i].TransactionID = transactionID
-		_, err = tx.Exec("INSERT INTO transaction_details (transaction_id, product_id, quantity, subtotal) VALUES ($1, $2, $3, $4)",
-			transactionID, details[i].ProductID, details[i].Quantity, details[i].Subtotal)
+	// Batch insert details in a single multi-row INSERT to avoid N round-trips
+	if len(details) > 0 {
+		valueStrings := make([]string, 0, len(details))
+		valueArgs := make([]interface{}, 0, len(details)*4)
+
+		for i := range details {
+			details[i].TransactionID = transactionID
+			// placeholders for postgres: $1, $2, ...
+			idx := i * 4
+			valueStrings = append(valueStrings, fmt.Sprintf("($%d,$%d,$%d,$%d)", idx+1, idx+2, idx+3, idx+4))
+			valueArgs = append(valueArgs, transactionID, details[i].ProductID, details[i].Quantity, details[i].Subtotal)
+		}
+
+		stmt := fmt.Sprintf("INSERT INTO transaction_details (transaction_id, product_id, quantity, subtotal) VALUES %s", strings.Join(valueStrings, ","))
+		_, err = tx.Exec(stmt, valueArgs...)
 		if err != nil {
 			return nil, err
 		}
